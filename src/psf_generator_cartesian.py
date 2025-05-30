@@ -47,7 +47,7 @@ if __name__=='__main__':
                   -18.015  #trefoilY 
                   ]
 
-    _x=_y= np.linspace(-1,1,1000)
+    _x=_y= np.linspace(-1,1,4096)
     X,Y= np.meshgrid(_x,_y)
     zernike= Zernike_polar(coefficients, X, Y)
     mask = (X**2+Y**2)< 1 # make a circular aperture of unit radius
@@ -63,8 +63,10 @@ if __name__=='__main__':
     if VISUALIZE:
         plt.figure()
         plt.subplot(1,2,1)
+        plt.title('Wavefront Map')
         plt.imshow(zernike, cmap='jet', origin='lower')
         plt.subplot(1,2,2)
-        plt.imshow(PSF[450:550, 450:550], cmap='jet', origin='lower')
+        plt.title('PSF')
+        plt.imshow(PSF[2000:2100, 2000:2100], cmap='jet', origin='lower')
         plt.show()
 
