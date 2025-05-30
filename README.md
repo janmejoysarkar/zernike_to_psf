@@ -4,7 +4,7 @@
 
 # PSF Generator from Zernike Coefficients
 
-Generate PSFs from Zernike Coefficients. Also, generate wavefront map for unit circle.
+Generate PSFs from Zernike Coefficients with `psf_generator_cartesian.py`. Also, generate wavefront map for unit circle.
 
 Steps:
 - Wavefront map is generated from a list of Zernike Coefficients.
