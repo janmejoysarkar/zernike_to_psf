@@ -7,6 +7,8 @@ Wed May 28 11:59:16 PM IST 2025
 @hostname: machine
 
 DESCRIPTION
+- Made to generate PSF from zernike coefficients.
+- Zernike Coeffs have to be entered.
 """
 
 import numpy as np
@@ -33,7 +35,14 @@ def Zernike_polar(coefficients, x, y):
     ZW = Z0+Z1+Z2+Z3+Z4+Z5+Z6+Z7+Z8+Z9+Z10 
     return ZW
 
-def psf(coefficients):
+def psf(N, coefficients, extent):
+    '''
+    Make PSF and wavefront map with zernike coeffs
+
+    N: int. Grid size.
+    coefficients: list. Zernike coeffs.
+    extent: int. PSF extent.
+    '''
     _x=_y= np.linspace(-1,1,N)
     X,Y= np.meshgrid(_x,_y)
     zernike= Zernike_polar(coefficients, X, Y)
@@ -45,40 +54,25 @@ def psf(coefficients):
     #ifftshift shifts the origin back to the corner after performing FFT.
     PSF= (np.abs(PSF))**2
     PSF= PSF/np.sum(PSF) # Power normalized PSF
+    PSF=PSF[N//2-extent:N//2+extent, N//2-extent:N//2+extent]
     return (zernike, PSF)
     
 def visualize(zernike, PSF):
     ## Visualizations ##
     extent_limits= np.array([-frame_size, frame_size, -frame_size, frame_size]) #arcsec 
-    plt.figure()
+    plt.figure("Encircled Energy Plots")
     plt.subplot(1,2,1)
     plt.title('Wavefront Map')
     plt.imshow(zernike, cmap='jet', origin='lower')
     plt.subplot(1,2,2)
     plt.title('PSF')
-    plt.imshow(PSF, extent=extent_limits, cmap='RdBu', origin='lower', norm=LogNorm())
+    plt.imshow(PSF, cmap='RdBu', origin='lower', norm=LogNorm())
+    plt.xlabel('Pixels')
+    plt.ylabel('Pixels')
     plt.show()
 
-if __name__=='__main__':
-    N=4096
-    D= 150e3 #u m
-    frame_size= D*0.7/(12) #arcsec
-    coefficients=[0 ,#piston 
-                  0 ,#tiltX
-                  0 ,#tiltY
-                  -19.368*2 ,#defocus
-                  -18.730*2 ,#astigX
-                  -15.694*2 ,#astigY
-                  -26.257*2 ,#comaX
-                  -10.104*2 ,#comaY
-                  -13.916*2 ,#primaryspherical
-                  -20.271*2 ,#trefoilX
-                  -18.015*2  #trefoilY 
-                  ]
-    gen_zernike, gen_PSF= psf(coefficients)
-    visualize(gen_zernike, gen_PSF)
-    
-    '''
+def encirc_energy(gen_PSF):
+    # Calculate encircled energy.
     _i= _j= np.arange(N)
     I,J= np.meshgrid(_i, _j)
     circ= np.sqrt((I-N/2)**2+(J-N/2)**2)
@@ -87,8 +81,27 @@ if __name__=='__main__':
         circ_mask= circ<rad
         ee= np.sum(gen_PSF*circ_mask)
         ee_list.append(ee)
-
     plt.figure("EE plot")
     plt.plot(ee_list)
     plt.show()
-    '''
+
+if __name__=='__main__':
+    D= 141e3 #um Size of primary mirror
+    N=int(D/12) # num of px if each pixel is 12 um.
+    frame_size= N*0.7 #arcsec for 0.7" per px.
+    extent= 2048 #4096 px at 0.7"/px required for SUIT FOV.
+    coefficients=[0 ,#piston 
+                  0 ,#tiltX
+                  0 ,#tiltY
+                  -19.368 ,#defocus
+                  -18.730 ,#astigX
+                  -15.694 ,#astigY
+                  -26.257 ,#comaX
+                  -10.104 ,#comaY
+                  -13.916 ,#primaryspherical
+                  -20.271 ,#trefoilX
+                  -18.015  #trefoilY 
+                  ]
+    gen_zernike, gen_PSF= psf(N, coefficients, extent)
+    visualize(gen_zernike, gen_PSF)
+    #encirc_energy(gen_PSF)
