@@ -19,3 +19,7 @@ Steps:
 ## Authors
 
 - [@janmejoysarkar](https://github.com/janmejoysarkar)
+
+## Screenshots
+
+![App Screenshot](README_files/screenshot_2025-06-09_16-52-25.png)
