@@ -56,13 +56,20 @@ def psf(N, coefficients, extent):
     PSF= PSF/np.sum(PSF) # Power normalized PSF
     PSF=PSF[N//2-extent:N//2+extent, N//2-extent:N//2+extent]
     return (zernike, PSF)
-    
+
+def stats(zernike):
+    ## Generate stats- PV and RMS of wavefront ##
+    RMS= np.sqrt(np.mean(zernike**2))
+    PV= np.max(zernike)-np.mean(zernike)
+    return (RMS, PV)
+
 def visualize(zernike, PSF):
     ## Visualizations ##
     extent_limits= np.array([-frame_size, frame_size, -frame_size, frame_size]) #arcsec 
+    rms_val, pv_val= stats(zernike)
     plt.figure("Encircled Energy Plots")
     plt.subplot(1,2,1)
-    plt.title('Wavefront Map')
+    plt.title(f'Wavefront Map | RMS: {rms_val:.2f} | PV: {pv_val:.2f}')
     plt.imshow(zernike, cmap='jet', origin='lower')
     plt.subplot(1,2,2)
     plt.title('PSF')
@@ -93,14 +100,14 @@ if __name__=='__main__':
     coefficients=[0 ,#piston 
                   0 ,#tiltX
                   0 ,#tiltY
-                  -19.368 ,#defocus
-                  -18.730 ,#astigX
-                  -15.694 ,#astigY
-                  -26.257 ,#comaX
-                  -10.104 ,#comaY
-                  -13.916 ,#primaryspherical
-                  -20.271 ,#trefoilX
-                  -18.015  #trefoilY 
+                  17.46 ,#defocus
+                  -23.68 ,#astigX
+                  19.17 ,#astigY
+                  3.34 ,#comaX
+                  -9.94 ,#comaY
+                  8.03 ,#primaryspherical
+                  4.49 ,#trefoilX
+                  -29.21  #trefoilY 
                   ]
     gen_zernike, gen_PSF= psf(N, coefficients, extent)
     visualize(gen_zernike, gen_PSF)
