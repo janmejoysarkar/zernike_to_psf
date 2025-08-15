@@ -10,7 +10,7 @@ DESCRIPTION
 - Made to generate PSF from zernike coefficients.
 - Zernike Coeffs have to be entered.
 """
-
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -18,7 +18,7 @@ from scipy.fftpack import fftshift, ifftshift, fft2, ifft2
 
 ## polar coordinates
 def Zernike_polar(coefficients, x, y):
-    r, u= (x**2+y**2), np.atan2(y,x)
+    r, u= (x**2+y**2), np.arctan2(y,x)
     Z = coefficients
     Z0  =  Z[0] #piston
     Z1  =  Z[1]  * 2*r*np.cos(u) #tilt X
@@ -67,32 +67,44 @@ def visualize(zernike, PSF):
     ## Visualizations ##
     extent_limits= np.array([-frame_size, frame_size, -frame_size, frame_size]) #arcsec 
     rms_val, pv_val= stats(zernike)
-    plt.figure("Encircled Energy Plots")
+    plt.figure("Encircled Energy Plots", figsize=(10,4))
     plt.subplot(1,2,1)
     plt.title(f'Wavefront Map | RMS: {rms_val:.2f} | PV: {pv_val:.2f}')
     plt.imshow(zernike, cmap='jet', origin='lower')
     plt.subplot(1,2,2)
     plt.title('PSF')
-    plt.imshow(PSF, cmap='RdBu', origin='lower', norm=LogNorm())
+    PSF_cropped= PSF[2038:2058, 2038:2058]
+    plt.imshow(PSF_cropped, cmap='RdBu', origin='lower')#, norm=LogNorm())
+    plt.colorbar()
     plt.xlabel('Pixels')
     plt.ylabel('Pixels')
-    plt.show()
+    if SAVE_PLOTS: plt.savefig(f'{project_path}/reports/psf_plot.pdf', dpi=300)
+    plt.close()
 
 def encirc_energy(gen_PSF):
     # Calculate encircled energy.
+    N= gen_PSF.shape[0]
     _i= _j= np.arange(N)
     I,J= np.meshgrid(_i, _j)
     circ= np.sqrt((I-N/2)**2+(J-N/2)**2)
     ee_list=[]
-    for rad in np.arange(100):
+    for rad in np.arange(25):
         circ_mask= circ<rad
         ee= np.sum(gen_PSF*circ_mask)
         ee_list.append(ee)
-    plt.figure("EE plot")
-    plt.plot(ee_list)
-    plt.show()
+    plt.figure("EE plot", figsize=(6,4))
+    plt.title('Encircled Energy')
+    plt.plot(ee_list, '.-')
+    plt.xlabel('Rad (px)')
+    plt.ylabel('Encircled Energy')
+    plt.tight_layout(w_pad=1)
+    plt.grid()
+    if SAVE_PLOTS: plt.savefig(f'{project_path}/reports/ee_plot.pdf', dpi=300)
+    plt.close()
 
 if __name__=='__main__':
+    SAVE_PLOTS= True 
+    project_path= os.path.abspath('..')
     D= 141e3 #um Size of primary mirror
     N=int(D/12) # num of px if each pixel is 12 um.
     frame_size= N*0.7 #arcsec for 0.7" per px.
@@ -100,15 +112,15 @@ if __name__=='__main__':
     coefficients=[0 ,#piston 
                   0 ,#tiltX
                   0 ,#tiltY
-                  17.46 ,#defocus
-                  -23.68 ,#astigX
-                  19.17 ,#astigY
-                  3.34 ,#comaX
-                  -9.94 ,#comaY
-                  8.03 ,#primaryspherical
-                  4.49 ,#trefoilX
-                  -29.21  #trefoilY 
+                  0 ,#17.46 ,#defocus
+                  0 ,#-23.68 ,#astigX
+                  0 ,#19.17 ,#astigY
+                  0 ,#3.34 ,#comaX
+                  0 ,#-9.94 ,#comaY
+                  0 ,#8.03 ,#primaryspherical
+                  0 ,#4.49 ,#trefoilX
+                  0 ,#-29.21  #trefoilY 
                   ]
     gen_zernike, gen_PSF= psf(N, coefficients, extent)
     visualize(gen_zernike, gen_PSF)
-    #encirc_energy(gen_PSF)
+    encirc_energy(gen_PSF)
